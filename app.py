@@ -34,7 +34,7 @@ if not st.session_state.input_done:
     if st.button("🚀 Predict Crop, Yield & Fertilizer"):
         st.session_state.user_df = user_df
         st.session_state.input_done = True
-        st.experimental_rerun()
+        st.rerun()  # ✅ Updated
 else:
     user_df = st.session_state.user_df
     pred_crop = le_crop.inverse_transform(crop_model.predict(user_df))[0]
@@ -47,7 +47,7 @@ else:
 
     if st.button("🔁 Enter New Values"):
         st.session_state.input_done = False
-        st.experimental_rerun()
+        st.rerun()  # ✅ Updated
 
 # === Toggle Charts Button ===
 if st.button("📊 Toggle Evaluation Graphs"):
