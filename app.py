@@ -81,9 +81,12 @@ if st.session_state.show_charts:
     ]
 
     results_df = pd.DataFrame(hardcoded_results)
-    if not all(col in results_df.columns for col in ["Technique", "Model"]):
-        st.error("Evaluation data is malformed. Please check the format of hardcoded_results.")
+
+    # Validate the DataFrame structure before plotting
+    if not all(col in results_df.columns for col in ["Technique", "Model", "Accuracy", "Precision", "Recall", "F1-Score"]):
+        st.error("Data structure is incorrect. Ensure all required columns are present.")
     else:
+        # Melt data for bar plot
         melted = results_df.melt(
             id_vars=["Technique", "Model"],
             value_vars=["Accuracy", "Precision", "Recall", "F1-Score"],
@@ -91,58 +94,62 @@ if st.session_state.show_charts:
             value_name="Score"
         )
 
-        for tech in melted["Technique"].unique():
-            tech_data = melted[melted["Technique"] == tech]
+        # Check if melted data is valid
+        if melted.empty:
+            st.error("The melted data is empty. Please check the input data.")
+        else:
+            for tech in melted["Technique"].unique():
+                tech_data = melted[melted["Technique"] == tech]
 
-            st.subheader(f"📊 {tech} - Model Performance")
+                st.subheader(f"📊 {tech} - Model Performance")
 
-            fig = px.bar(
-                tech_data,
-                x="Model",
-                y="Score",
-                color="Metric",
-                barmode="group",
-                text="Score",
-                color_discrete_sequence=px.colors.sequential.Plasma_r
-            )
+                fig = px.bar(
+                    tech_data,
+                    x="Model",
+                    y="Score",
+                    color="Metric",
+                    barmode="group",
+                    text="Score",
+                    color_discrete_sequence=px.colors.sequential.Plasma_r
+                )
 
-            fig.update_traces(
-                texttemplate='%{text:.2f}',
-                textposition='outside',
-                marker_line_color='black',
-                marker_line_width=0.5
-            )
+                fig.update_traces(
+                    texttemplate='%{text:.2f}',
+                    textposition='outside',
+                    marker_line_color='black',
+                    marker_line_width=0.5
+                )
 
-            fig.update_layout(
-                height=480,
-                font=dict(
-                    family="Segoe UI, sans-serif",
-                    size=14,
-                    color="#333"
-                ),
-                xaxis=dict(
-                    title="Model",
-                    titlefont=dict(size=16),
-                    tickfont=dict(size=14),
-                    showgrid=False
-                ),
-                yaxis=dict(
-                    title="Score (%)",
-                    titlefont=dict(size=16),
-                    tickfont=dict(size=14),
-                    showgrid=True,
-                    gridcolor="#eaeaea"
-                ),
-                legend=dict(
-                    title="Metric",
-                    orientation="h",
-                    yanchor="bottom",
-                    y=1.02,
-                    xanchor="right",
-                    x=1
-                ),
-                margin=dict(l=40, r=30, t=50, b=40),
-                plot_bgcolor='white',
-            )
+                fig.update_layout(
+                    height=480,
+                    font=dict(
+                        family="Segoe UI, sans-serif",
+                        size=14,
+                        color="#333"
+                    ),
+                    xaxis=dict(
+                        title="Model",
+                        titlefont=dict(size=16),
+                        tickfont=dict(size=14),
+                        showgrid=False
+                    ),
+                    yaxis=dict(
+                        title="Score (%)",
+                        titlefont=dict(size=16),
+                        tickfont=dict(size=14),
+                        showgrid=True,
+                        gridcolor="#eaeaea"
+                    ),
+                    legend=dict(
+                        title="Metric",
+                        orientation="h",
+                        yanchor="bottom",
+                        y=1.02,
+                        xanchor="right",
+                        x=1
+                    ),
+                    margin=dict(l=40, r=30, t=50, b=40),
+                    plot_bgcolor='white',
+                )
 
-            st.plotly_chart(fig, use_container_width=True)
+                st.plotly_chart(fig, use_container_width=True)
