@@ -32,7 +32,7 @@ if not st.session_state.input_done:
     if st.button("🚀 Predict Crop, Yield & Fertilizer"):
         st.session_state.user_df = user_df
         st.session_state.input_done = True
-        st.rerun()  # ✅ Updated
+        st.rerun()
 else:
     user_df = st.session_state.user_df
     pred_crop = le_crop.inverse_transform(crop_model.predict(user_df))[0]
@@ -45,7 +45,7 @@ else:
 
     if st.button("🔁 Enter New Values"):
         st.session_state.input_done = False
-        st.rerun()  # ✅ Updated
+        st.rerun()
 
 # === Toggle Charts Button ===
 if st.button("📊 Toggle Evaluation Graphs"):
@@ -93,11 +93,18 @@ if st.session_state.show_charts:
             value_name="Score"
         )
 
+        # Professional color map for metrics
+        metric_colors = {
+            "Accuracy": "#636EFA",     # Blue
+            "Precision": "#00CC96",    # Green
+            "Recall": "#AB63FA",       # Purple
+            "F1-Score": "#EF553B"      # Red-orange
+        }
+
         for tech in melted["Technique"].unique():
             tech_data = melted[melted["Technique"] == tech].copy()
             st.subheader(f"📊 {tech} - Metric Comparison")
 
-            # Professional Bar Plot using Plotly
             fig_bar = go.Figure()
 
             for metric in ["Accuracy", "Precision", "Recall", "F1-Score"]:
@@ -107,22 +114,29 @@ if st.session_state.show_charts:
                         x=metric_data["Model"],
                         y=metric_data["Score"],
                         name=metric,
+                        marker_color=metric_colors[metric],
                         text=metric_data["Score"].round(2),
                         textposition="auto",
-                        hoverinfo="x+name+y",
+                        hoverinfo="x+name+y"
                     )
                 )
 
             fig_bar.update_layout(
-                title=f"{tech} - Bar Plot Comparison",
+                title=f"{tech} - Model Performance Comparison",
                 barmode="group",
                 xaxis_title="Model",
-                yaxis_title="Score",
-                template="plotly_dark",  # Professional color scheme
+                yaxis_title="Score (%)",
+                template="plotly_white",
                 height=600,
-                xaxis_tickangle=-45,  # Rotate x-axis labels for readability
+                xaxis_tickangle=-45,
                 showlegend=True,
+                legend=dict(
+                    orientation="h",
+                    yanchor="bottom",
+                    y=1.02,
+                    xanchor="right",
+                    x=1
+                )
             )
 
             st.plotly_chart(fig_bar)
-
