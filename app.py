@@ -90,7 +90,7 @@ if st.session_state.show_charts:
     )
 
        # Generate professionally styled bar plots for each technique
-    for tech in melted["Technique"].unique():
+       for tech in melted["Technique"].unique():
         tech_data = melted[melted["Technique"] == tech]
 
         st.subheader(f"📊 {tech} - Model Performance")
@@ -105,9 +105,15 @@ if st.session_state.show_charts:
             color_discrete_sequence=px.colors.sequential.Plasma_r
         )
 
+        fig.update_traces(
+            texttemplate='%{text:.2f}',
+            textposition='outside',
+            marker_line_color='black',
+            marker_line_width=0.5
+        )
+
         fig.update_layout(
             height=480,
-            title_font_size=20,
             font=dict(
                 family="Segoe UI, sans-serif",
                 size=14,
@@ -115,14 +121,14 @@ if st.session_state.show_charts:
             ),
             xaxis=dict(
                 title="Model",
-                titlefont_size=16,
-                tickfont_size=14,
+                titlefont=dict(size=16),
+                tickfont=dict(size=14),
                 showgrid=False
             ),
             yaxis=dict(
                 title="Score (%)",
-                titlefont_size=16,
-                tickfont_size=14,
+                titlefont=dict(size=16),
+                tickfont=dict(size=14),
                 showgrid=True,
                 gridcolor="#eaeaea"
             ),
@@ -138,12 +144,6 @@ if st.session_state.show_charts:
             plot_bgcolor='white',
         )
 
-        fig.update_traces(
-            texttemplate='%{text:.2f}',
-            textposition='outside',
-            marker_line_color='black',
-            marker_line_width=0.5
-        )
-
         st.plotly_chart(fig, use_container_width=True)
+
  
