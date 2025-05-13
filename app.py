@@ -89,11 +89,12 @@ if st.session_state.show_charts:
         value_name="Score"
     )
 
-    # Generate bar plots for each technique
+       # Generate professionally styled bar plots for each technique
     for tech in melted["Technique"].unique():
         tech_data = melted[melted["Technique"] == tech]
 
-        st.subheader(f"📊 {tech} - Metric Comparison (Interactive)")
+        st.subheader(f"📊 {tech} - Model Performance")
+
         fig = px.bar(
             tech_data,
             x="Model",
@@ -101,14 +102,48 @@ if st.session_state.show_charts:
             color="Metric",
             barmode="group",
             text="Score",
-            color_discrete_sequence=px.colors.qualitative.Set2
+            color_discrete_sequence=px.colors.sequential.Plasma_r
         )
+
         fig.update_layout(
-            height=500,
-            xaxis_title="Model",
-            yaxis_title="Score (%)",
-            legend_title="Metric",
-            margin=dict(l=40, r=40, t=60, b=40),
+            height=480,
+            title_font_size=20,
+            font=dict(
+                family="Segoe UI, sans-serif",
+                size=14,
+                color="#333"
+            ),
+            xaxis=dict(
+                title="Model",
+                titlefont_size=16,
+                tickfont_size=14,
+                showgrid=False
+            ),
+            yaxis=dict(
+                title="Score (%)",
+                titlefont_size=16,
+                tickfont_size=14,
+                showgrid=True,
+                gridcolor="#eaeaea"
+            ),
+            legend=dict(
+                title="Metric",
+                orientation="h",
+                yanchor="bottom",
+                y=1.02,
+                xanchor="right",
+                x=1
+            ),
+            margin=dict(l=40, r=30, t=50, b=40),
+            plot_bgcolor='white',
         )
-        fig.update_traces(texttemplate='%{text:.2f}', textposition='outside')
+
+        fig.update_traces(
+            texttemplate='%{text:.2f}',
+            textposition='outside',
+            marker_line_color='black',
+            marker_line_width=0.5
+        )
+
         st.plotly_chart(fig, use_container_width=True)
+ 
