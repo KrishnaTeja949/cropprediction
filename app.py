@@ -1,60 +1,9 @@
 import streamlit as st
 import pandas as pd
-import joblib
 import plotly.express as px
 
-# Load models and encoders
-crop_model = joblib.load('crop_model.pkl')
-yield_model = joblib.load('yield_model.pkl')
-fert_model = joblib.load('fert_model.pkl')
-le_crop = joblib.load('le_crop.pkl')
-le_fert = joblib.load('le_fert.pkl')
-feature_names = joblib.load('feature_names.pkl')
-
-st.title("🌾 Smart Agriculture Assistant")
-
-# Session state for input persistence and chart toggle
-if 'input_done' not in st.session_state:
-    st.session_state.input_done = False
-if 'show_charts' not in st.session_state:
-    st.session_state.show_charts = False
-if 'user_df' not in st.session_state:
-    st.session_state.user_df = pd.DataFrame()
-
-if not st.session_state.input_done:
-    st.header("🔢 Enter Soil and Weather Parameters")
-    user_input = {}
-    for col in feature_names:
-        user_input[col] = st.number_input(f"Enter value for {col}", value=0.0, key=col)
-    user_df = pd.DataFrame([user_input])
-
-    if st.button("🚀 Predict Crop, Yield & Fertilizer"):
-        st.session_state.user_df = user_df
-        st.session_state.input_done = True
-        st.rerun()  # ✅ Updated
-else:
-    user_df = st.session_state.user_df
-    pred_crop = le_crop.inverse_transform(crop_model.predict(user_df))[0]
-    pred_yield = yield_model.predict(user_df)[0]
-    pred_fert = le_fert.inverse_transform(fert_model.predict(user_df))[0]
-
-    st.success(f"🧾 **Recommended Crop**: {pred_crop}")
-    st.info(f"📈 **Predicted Yield**: {pred_yield:.2f} quintals/hectare")
-    st.warning(f"💡 **Recommended Fertilizer**: {pred_fert}")
-
-    if st.button("🔁 Enter New Values"):
-        st.session_state.input_done = False
-        st.rerun()  # ✅ Updated
-
-# === Toggle Charts Button ===
-if st.button("📊 Toggle Evaluation Graphs"):
-    st.session_state.show_charts = not st.session_state.show_charts
-
-if st.session_state.show_charts:
-    st.subheader("📈 Model Evaluation Metrics")
-
-    # Hardcoded evaluation results
-    hardcoded_results = [
+# Simulated DataFrame (replace this with your actual data)
+hardcoded_results = [
         {"Technique": "RFE", "Model": "Naive Bayes", "Accuracy": 98.82, "Precision": 98.87, "Recall": 98.82, "F1-Score": 98.82},
         {"Technique": "RFE", "Model": "Decision Tree", "Accuracy": 98.82, "Precision": 98.87, "Recall": 98.82, "F1-Score": 98.81},
         {"Technique": "RFE", "Model": "SVM", "Accuracy": 97.23, "Precision": 97.74, "Recall": 97.23, "F1-Score": 97.20},
@@ -80,76 +29,69 @@ if st.session_state.show_charts:
         {"Technique": "ROSE", "Model": "KNN", "Accuracy": 97.95, "Precision": 98.12, "Recall": 97.95, "F1-Score": 97.95}
     ]
 
-    results_df = pd.DataFrame(hardcoded_results)
+results_df = pd.DataFrame(hardcoded_results)
 
-    # Validate the DataFrame structure before plotting
-    if not all(col in results_df.columns for col in ["Technique", "Model", "Accuracy", "Precision", "Recall", "F1-Score"]):
-        st.error("Data structure is incorrect. Ensure all required columns are present.")
-    else:
-        # Melt data for bar plot
-        melted = results_df.melt(
-            id_vars=["Technique", "Model"],
-            value_vars=["Accuracy", "Precision", "Recall", "F1-Score"],
-            var_name="Metric",
-            value_name="Score"
+# Melt the data for plotting
+melted = results_df.melt(
+    id_vars=["Technique", "Model"],
+    value_vars=["Accuracy", "Precision", "Recall", "F1-Score"],
+    var_name="Metric",
+    value_name="Score"
+)
+
+# Check if melted data is valid
+if melted.empty:
+    st.error("The melted data is empty. Please check the input data.")
+else:
+    for tech in melted["Technique"].unique():
+        tech_data = melted[melted["Technique"] == tech]
+
+        st.subheader(f"📊 {tech} - Model Performance")
+
+        # Create the plotly bar chart
+        fig = px.bar(
+            tech_data,
+            x="Model",
+            y="Score",
+            color="Metric",
+            barmode="group",
+            text="Score",
+            color_discrete_sequence=px.colors.sequential.Plasma_r
         )
 
-        # Check if melted data is valid
-        if melted.empty:
-            st.error("The melted data is empty. Please check the input data.")
-        else:
-            for tech in melted["Technique"].unique():
-                tech_data = melted[melted["Technique"] == tech]
+        # Update the layout to make the plot more professional
+        fig.update_layout(
+            height=480,
+            font=dict(
+                family="Segoe UI, sans-serif",
+                size=14,
+                color="#333"
+            ),
+            xaxis=dict(
+                title="Model",
+                titlefont=dict(size=16, family="Segoe UI, sans-serif"),
+                tickfont=dict(size=14, family="Segoe UI, sans-serif"),
+                showgrid=False
+            ),
+            yaxis=dict(
+                title="Score (%)",
+                titlefont=dict(size=16, family="Segoe UI, sans-serif"),
+                tickfont=dict(size=14, family="Segoe UI, sans-serif"),
+                showgrid=True,
+                gridcolor="#eaeaea"
+            ),
+            legend=dict(
+                title="Metric",
+                orientation="h",
+                yanchor="bottom",
+                y=1.02,
+                xanchor="right",
+                x=1
+            ),
+            margin=dict(l=40, r=30, t=50, b=40),
+            plot_bgcolor='white',
+            bargap=0.2  # Add space between bars for better visibility
+        )
 
-                st.subheader(f"📊 {tech} - Model Performance")
-
-                fig = px.bar(
-                    tech_data,
-                    x="Model",
-                    y="Score",
-                    color="Metric",
-                    barmode="group",
-                    text="Score",
-                    color_discrete_sequence=px.colors.sequential.Plasma_r
-                )
-
-                fig.update_traces(
-                    texttemplate='%{text:.2f}',
-                    textposition='outside',
-                    marker_line_color='black',
-                    marker_line_width=0.5
-                )
-
-                fig.update_layout(
-                    height=480,
-                    font=dict(
-                        family="Segoe UI, sans-serif",
-                        size=14,
-                        color="#333"
-                    ),
-                    xaxis=dict(
-                        title="Model",
-                        titlefont=dict(size=16),
-                        tickfont=dict(size=14),
-                        showgrid=False
-                    ),
-                    yaxis=dict(
-                        title="Score (%)",
-                        titlefont=dict(size=16),
-                        tickfont=dict(size=14),
-                        showgrid=True,
-                        gridcolor="#eaeaea"
-                    ),
-                    legend=dict(
-                        title="Metric",
-                        orientation="h",
-                        yanchor="bottom",
-                        y=1.02,
-                        xanchor="right",
-                        x=1
-                    ),
-                    margin=dict(l=40, r=30, t=50, b=40),
-                    plot_bgcolor='white',
-                )
-
-                st.plotly_chart(fig, use_container_width=True)
+        # Display the chart
+        st.plotly_chart(fig, use_container_width=True)
