@@ -4,19 +4,25 @@ import pandas as pd
 import joblib
 import matplotlib.pyplot as plt
 import seaborn as sns
-import sys
 
-# Load models and encoders
-crop_model = joblib.load('crop_model.pkl')
-yield_model = joblib.load('yield_model.pkl')
-fert_model = joblib.load('fert_model.pkl')
-le_crop = joblib.load('le_crop.pkl')
-le_fert = joblib.load('le_fert.pkl')
-feature_names = joblib.load('feature_names.pkl')
+# === Page Config ===
+st.set_page_config(page_title="Smart Agriculture Assistant", layout="wide")
+
+# === Load Models and Encoders ===
+try:
+    crop_model = joblib.load('crop_model.pkl')
+    yield_model = joblib.load('yield_model.pkl')
+    fert_model = joblib.load('fert_model.pkl')
+    le_crop = joblib.load('le_crop.pkl')
+    le_fert = joblib.load('le_fert.pkl')
+    feature_names = joblib.load('feature_names.pkl')
+except Exception as e:
+    st.error(f"Error loading model files: {e}")
+    st.stop()
 
 st.title("🌾 Smart Agriculture Assistant")
 
-# Session state for input persistence and chart toggle
+# === Session State ===
 if 'input_done' not in st.session_state:
     st.session_state.input_done = False
 if 'show_charts' not in st.session_state:
@@ -24,6 +30,7 @@ if 'show_charts' not in st.session_state:
 if 'user_df' not in st.session_state:
     st.session_state.user_df = pd.DataFrame()
 
+# === Input UI ===
 if not st.session_state.input_done:
     st.header("🔢 Enter Soil and Weather Parameters")
     user_input = {}
@@ -34,7 +41,9 @@ if not st.session_state.input_done:
     if st.button("🚀 Predict Crop, Yield & Fertilizer"):
         st.session_state.user_df = user_df
         st.session_state.input_done = True
-        st.rerun()  # ✅ Updated
+        st.rerun()
+
+# === Prediction Output ===
 else:
     user_df = st.session_state.user_df
     pred_crop = le_crop.inverse_transform(crop_model.predict(user_df))[0]
@@ -47,17 +56,17 @@ else:
 
     if st.button("🔁 Enter New Values"):
         st.session_state.input_done = False
-        st.rerun()  # ✅ Updated
+        st.rerun()
 
-# === Toggle Charts Button ===
-if st.button("📊 Toggle Evaluation Graphs"):
+# === Toggle Charts ===
+st.divider()
+if st.button("📊 Toggle Evaluation Bar Charts"):
     st.session_state.show_charts = not st.session_state.show_charts
 
 if st.session_state.show_charts:
-    st.subheader("📈 Model Evaluation Metrics")
+    st.subheader("📊 Model Evaluation Metrics (Bar Charts Only)")
 
-    # Hardcoded evaluation results
-    hardcoded_results = [
+    results = [
         {"Technique": "RFE", "Model": "Naive Bayes", "Accuracy": 98.82, "Precision": 98.87, "Recall": 98.82, "F1-Score": 98.82},
         {"Technique": "RFE", "Model": "Decision Tree", "Accuracy": 98.82, "Precision": 98.87, "Recall": 98.82, "F1-Score": 98.81},
         {"Technique": "RFE", "Model": "SVM", "Accuracy": 97.23, "Precision": 97.74, "Recall": 97.23, "F1-Score": 97.20},
@@ -83,36 +92,20 @@ if st.session_state.show_charts:
         {"Technique": "ROSE", "Model": "KNN", "Accuracy": 97.95, "Precision": 98.12, "Recall": 97.95, "F1-Score": 97.95}
     ]
 
-    results_df = pd.DataFrame(hardcoded_results)
-    if not all(col in results_df.columns for col in ["Technique", "Model"]):
-        st.error("Evaluation data is malformed. Please check the format of hardcoded_results.")
-    else:
-        melted = results_df.melt(
-            id_vars=["Technique", "Model"],
-            value_vars=["Accuracy", "Precision", "Recall", "F1-Score"],
-            var_name="Metric",
-            value_name="Score"
-        )
+    results_df = pd.DataFrame(results)
+    melted = results_df.melt(
+        id_vars=["Technique", "Model"],
+        value_vars=["Accuracy", "Precision", "Recall", "F1-Score"],
+        var_name="Metric",
+        value_name="Score"
+    )
 
-        for tech in melted["Technique"].unique():
-            tech_data = melted[melted["Technique"] == tech].copy()
-            st.subheader(f"📊 {tech} - Metric Comparison")
+    for tech in melted["Technique"].unique():
+        tech_data = melted[melted["Technique"] == tech]
+        st.subheader(f"📊 {tech} - Metric Comparison")
 
-            fig_bar, ax_bar = plt.subplots(figsize=(14, 8))
-            sns.barplot(data=tech_data, x="Model", y="Score", hue="Metric", ax=ax_bar)
-            ax_bar.set_title(f"{tech} - Bar Plot")
-            st.pyplot(fig_bar)
-
-            for metric in ["Accuracy", "Precision", "Recall", "F1-Score"]:
-                fig_line, ax_line = plt.subplots(figsize=(10, 5))
-                metric_data = tech_data[tech_data["Metric"] == metric]
-                sns.lineplot(data=metric_data, x="Model", y="Score", marker="o", ax=ax_line)
-                ax_line.set_title(f"{tech} - {metric} Line Plot")
-                st.pyplot(fig_line)
-
-        for metric in ["Accuracy", "Precision", "Recall", "F1-Score"]:
-            fig_heat, ax_heat = plt.subplots(figsize=(10, 6))
-            pivot_df = results_df.pivot(index="Model", columns="Technique", values=metric)
-            sns.heatmap(pivot_df, annot=True, cmap="YlGnBu", fmt=".2f", ax=ax_heat)
-            ax_heat.set_title(f"Heatmap of {metric} by Model & Technique")
-            st.pyplot(fig_heat)
+        fig_bar, ax_bar = plt.subplots(figsize=(14, 6))
+        sns.barplot(data=tech_data, x="Model", y="Score", hue="Metric", ax=ax_bar)
+        ax_bar.set_title(f"{tech} - Metrics Bar Chart")
+        ax_bar.set_ylim(96, 100)
+        st.pyplot(fig_bar)
