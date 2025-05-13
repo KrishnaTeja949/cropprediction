@@ -95,10 +95,10 @@ if st.session_state.show_charts:
 
         # Professional color map for metrics
         metric_colors = {
-            "Accuracy": "#636EFA",     # Blue
-            "Precision": "#00CC96",    # Green
-            "Recall": "#AB63FA",       # Purple
-            "F1-Score": "#EF553B"      # Red-orange
+            "Accuracy": "#03c2fc",     # Blue
+            "Precision": "#e703fc",    # Green
+            "Recall": "#03fcfc",       # Purple
+            "F1-Score": "#03fcb1"      # Red-orange
         }
 
         for tech in melted["Technique"].unique():
